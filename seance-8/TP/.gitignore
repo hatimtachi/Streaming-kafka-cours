@@ -1,0 +1,7 @@
+# Sorties generees par les connecteurs sink (le fichier source orders.txt est versionne)
+data/orders-out.txt
+data/orders-avro-out.txt
+*.log
+.DS_Store
+.idea/
+.vscode/
