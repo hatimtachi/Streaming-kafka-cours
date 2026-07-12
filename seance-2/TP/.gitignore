@@ -1,0 +1,5 @@
+# Artefacts locaux / editeurs
+*.log
+.DS_Store
+.idea/
+.vscode/
