@@ -1,0 +1,11 @@
+# Build Maven
+target/
+
+# Editeurs / OS
+*.log
+.DS_Store
+.idea/
+*.iml
+.vscode/
+
+solution/

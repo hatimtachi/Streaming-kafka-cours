@@ -1,0 +1,14 @@
+# Fins de ligne deterministes, quel que soit l'OS qui clone le depot.
+# Indispensable : un .sh en CRLF casse sous Linux/macOS et dans les conteneurs.
+* text=auto
+
+*.sh           text eol=lf
+*.ps1          text eol=crlf
+*.yml          text eol=lf
+*.yaml         text eol=lf
+*.md           text eol=lf
+*.java         text eol=lf
+*.xml          text eol=lf
+*.properties   text eol=lf
+.gitignore     text eol=lf
+.gitattributes text eol=lf
