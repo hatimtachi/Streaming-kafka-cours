@@ -1,0 +1,101 @@
+# TP Seance 11 - Cluster Kafka a 3 brokers (KRaft) + Kafbat UI
+# ESGI - 5e annee - Data Engineering - Stream Processing avec Apache Kafka
+#
+# Kafka Streams stateful : agregations, state stores, changelogs.
+# Demarrage : docker compose up -d        UI : http://localhost:8080
+#
+# Adresses des brokers (IMPORTANT, conformes au support du cours) :
+#   - depuis votre machine (CLI hote / code Java) : localhost:29092 / 29093 / 29094
+#   - a l'interieur du reseau Docker (UI, kcli)    : broker-1:9092 / broker-2:9092 / broker-3:9092
+name: tp-kafka-s11
+
+x-kafka-common: &kafka-common
+  image: apache/kafka:4.3.0
+  restart: unless-stopped
+
+x-kafka-env-common: &kafka-env-common
+  KAFKA_PROCESS_ROLES: broker,controller
+  KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker-1:9093,2@broker-2:9093,3@broker-3:9093
+  KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,HOST:PLAINTEXT,DOCKER:PLAINTEXT
+  KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
+  # HOST : acces hote (port 29092 dans le conteneur) ; DOCKER : reseau interne (9092)
+  KAFKA_LISTENERS: HOST://0.0.0.0:29092,DOCKER://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+  KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+  KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+  KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+  KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+  KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+  KAFKA_NUM_PARTITIONS: 3
+
+x-kafka-healthcheck: &kafka-healthcheck
+  test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1 || exit 1"]
+  interval: 10s
+  timeout: 10s
+  retries: 20
+  start_period: 25s
+
+services:
+  broker-1:
+    <<: *kafka-common
+    container_name: broker-1
+    hostname: broker-1
+    ports:
+      - "29092:29092"        # CLI hote / code Java -> localhost:29092
+    environment:
+      <<: *kafka-env-common
+      KAFKA_NODE_ID: 1
+      KAFKA_ADVERTISED_LISTENERS: HOST://localhost:29092,DOCKER://broker-1:9092
+    volumes:
+      - broker-1-data:/var/lib/kafka/data
+    healthcheck: *kafka-healthcheck
+
+  broker-2:
+    <<: *kafka-common
+    container_name: broker-2
+    hostname: broker-2
+    ports:
+      - "29093:29092"        # CLI hote -> localhost:29093
+    environment:
+      <<: *kafka-env-common
+      KAFKA_NODE_ID: 2
+      KAFKA_ADVERTISED_LISTENERS: HOST://localhost:29093,DOCKER://broker-2:9092
+    volumes:
+      - broker-2-data:/var/lib/kafka/data
+    healthcheck: *kafka-healthcheck
+
+  broker-3:
+    <<: *kafka-common
+    container_name: broker-3
+    hostname: broker-3
+    ports:
+      - "29094:29092"        # CLI hote -> localhost:29094
+    environment:
+      <<: *kafka-env-common
+      KAFKA_NODE_ID: 3
+      KAFKA_ADVERTISED_LISTENERS: HOST://localhost:29094,DOCKER://broker-3:9092
+    volumes:
+      - broker-3-data:/var/lib/kafka/data
+    healthcheck: *kafka-healthcheck
+
+  kafka-ui:
+    image: ghcr.io/kafbat/kafka-ui:v1.4.2
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker-1:9092,broker-2:9092,broker-3:9092
+      DYNAMIC_CONFIG_ENABLED: "true"
+    depends_on:
+      broker-1:
+        condition: service_healthy
+      broker-2:
+        condition: service_healthy
+      broker-3:
+        condition: service_healthy
+
+volumes:
+  broker-1-data:
+  broker-2-data:
+  broker-3-data:
