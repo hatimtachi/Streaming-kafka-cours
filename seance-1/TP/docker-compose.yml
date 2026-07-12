@@ -1,0 +1,61 @@
+# TP Seance 1 - Premier cluster Kafka (KRaft, sans ZooKeeper)
+# ESGI - 5e annee - Data Engineering - Stream Processing avec Apache Kafka
+#
+# Un seul broker en mode KRaft combine (broker + controller) + Kafbat UI.
+# Demarrage : docker compose up -d        UI : http://localhost:8080
+name: tp-kafka-s1
+
+services:
+  broker:
+    image: apache/kafka:4.3.0
+    container_name: broker
+    hostname: broker
+    ports:
+      - "9092:9092"          # acces CLI depuis votre machine (localhost:9092)
+    environment:
+      # --- Identite du noeud KRaft ---
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:9093
+
+      # --- Listeners ---
+      # HOST       : outils CLI lances depuis votre machine  -> localhost:9092
+      # DOCKER     : conteneurs du reseau Docker (Kafka UI)   -> broker:29092
+      # CONTROLLER : usage interne KRaft (election, metadonnees) sur :9093
+      KAFKA_LISTENERS: HOST://0.0.0.0:9092,DOCKER://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: HOST://localhost:9092,DOCKER://broker:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,HOST:PLAINTEXT,DOCKER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
+
+      # --- Reglages mono-broker (une seule replique possible) ---
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 1          # 1 partition par defaut a la creation d'un topic
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 20s
+
+  kafka-ui:
+    image: ghcr.io/kafbat/kafka-ui:v1.4.2
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker:29092
+      DYNAMIC_CONFIG_ENABLED: "true"
+    depends_on:
+      broker:
+        condition: service_healthy
+
+volumes:
+  kafka-data:
