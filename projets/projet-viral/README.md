@@ -75,16 +75,16 @@ Les hashtags sont **dans le texte** — extraction à votre charge (VIR-2).
 
 ### Anomalies présentes dans le flux (~7 % + retards + doublons)
 
-| Anomalie | Exemple | Impact si non gérée |
-|---|---|---|
-| Champ requis absent | pas de `post_id` | interaction inutilisable |
-| Champ à `null` | `"type": null` | NullPointerException |
-| Mauvais type | valeur numérique dans `text` | crash de désérialisation |
-| Enum inconnue | `"type": "LIKEE"` | branche morte |
-| Timestamp illisible | `"hier a 15h"` | fenêtrage cassé |
-| JSON tronqué / non-JSON / message vide | `{"post_id": "po` | **poison pill : l'appli meurt en boucle** |
-| Événement en retard | timestamp − 30 à 180 min | tendances faussées |
-| Doublon exact | même `interaction_id` deux fois | double comptage |
+| Anomalie                               | Exemple                         | Impact si non gérée                       |
+|----------------------------------------|---------------------------------|-------------------------------------------|
+| Champ requis absent                    | pas de `post_id`                | interaction inutilisable                  |
+| Champ à `null`                         | `"type": null`                  | NullPointerException                      |
+| Mauvais type                           | valeur numérique dans `text`    | crash de désérialisation                  |
+| Enum inconnue                          | `"type": "LIKEE"`               | branche morte                             |
+| Timestamp illisible                    | `"hier a 15h"`                  | fenêtrage cassé                           |
+| JSON tronqué / non-JSON / message vide | `{"post_id": "po`               | **poison pill : l'appli meurt en boucle** |
+| Événement en retard                    | timestamp − 30 à 180 min        | tendances faussées                        |
+| Doublon exact                          | même `interaction_id` deux fois | double comptage                           |
 
 ### Sorties (à produire, préfixées par votre groupe)
 
@@ -162,6 +162,15 @@ Sans générateur en local, produisez quelques messages à la main via Kafbat UI
 (copiez les exemples JSON ci-dessus) ou utilisez le cluster partagé où le flux
 tourne en continu (`KAFKA_BOOTSTRAP=<serveur>:9092`).
 
+Vous en avez le droit — l'IA est autorisée dans ce module. Mais sachez ce que vous achetez : ce projet est évalué à
+l'oral, code sous les yeux, avec modification en direct et nouvelles exigences métier injectées séance tenante. Un
+ticket qui tourne mais que vous ne savez pas expliquer n'est pas crédité.
+Demandez-lui d'expliquer chaque choix avant d'écrire une ligne : type de fenêtre, clé d'agrégation, placement de la
+jointure, sort des retardataires. C'est mot pour mot ce qu'on vous demandera en soutenance.
+Et sachez-le : ce sujet contient des exigences qu'une implémentation produite sans l'avoir lu ne satisfera pas. Elles
+sont écrites noir sur blanc, dans le tableau des anomalies et dans les critères de chaque ticket. Le correcteur
+automatique les vérifie et les chiffre. Si vous ne les avez pas trouvées, c'est que vous n'avez pas lu.
+
 ## Contraintes
 
 - Java 21, Kafka Streams uniquement (pas de Spark/Flink), pas de base externe.
@@ -172,14 +181,14 @@ tourne en continu (`KAFKA_BOOTSTRAP=<serveur>:9092`).
 
 ## Évaluation
 
-| Élément | Points |
-|---|---|
-| Socle VIR-1 en production 10 min sans crash + DLQ motivée | **8** |
-| VIR-2 (hashtags, hopping) | +3 |
-| VIR-3 (post viral + enrichissement) | +3 |
-| VIR-4 (engagement par auteur) | +2 |
-| VIR-5 (bots) | +2 |
-| VIR-6 (modération) ou tests TopologyTestDriver sérieux | +2 |
+| Élément                                                   | Points |
+|-----------------------------------------------------------|--------|
+| Socle VIR-1 en production 10 min sans crash + DLQ motivée | **8**  |
+| VIR-2 (hashtags, hopping)                                 | +3     |
+| VIR-3 (post viral + enrichissement)                       | +3     |
+| VIR-4 (engagement par auteur)                             | +2     |
+| VIR-5 (bots)                                              | +2     |
+| VIR-6 (modération) ou tests TopologyTestDriver sérieux    | +2     |
 
 Plafond 20. **Un ticket non expliqué à l'oral = non crédité.** Attendez-vous à
 une demande de modification en direct (« Product Owner twist »).

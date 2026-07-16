@@ -53,8 +53,13 @@ cartflow.stock.movements ─┘        │
   "user_id": "u-0319",
   "card_id": "card-0160",
   "items": [
-    {"sku": "sku-0003", "product": "Drone Zen 38", "category": "HIGH-TECH",
-     "qty": 1, "unit_price": 1321.10}
+    {
+      "sku": "sku-0003",
+      "product": "Drone Zen 38",
+      "category": "HIGH-TECH",
+      "qty": 1,
+      "unit_price": 1321.10
+    }
   ],
   "total": 1321.10,
   "currency": "EUR",
@@ -83,25 +88,29 @@ Catégories : `HIGH-TECH, MAISON, MODE, SPORT, BEAUTE, JARDIN, JOUETS, EPICERIE`
 positif = réassort (un réassort aléatoire passe toutes les ~8 s) :
 
 ```json
-{"sku": "sku-0003", "delta": -1, "warehouse": "ORLY-1",
- "timestamp": "2026-07-04T14:03:21.512Z"}
+{
+  "sku": "sku-0003",
+  "delta": -1,
+  "warehouse": "ORLY-1",
+  "timestamp": "2026-07-04T14:03:21.512Z"
+}
 ```
 
 Entrepôts : `ORLY-1, LILLE-2, LYON-3`.
 
 ### Anomalies présentes dans le flux (~7 % + retards + doublons)
 
-| Anomalie | Exemple | Impact si non gérée |
-|---|---|---|
-| Champ requis absent | pas d'`order_id` | paiement irrapprochable |
-| Champ à `null` | `"total": null` | NullPointerException |
-| Mauvais type | `"total": "douze"` | crash de désérialisation |
-| Valeur hors bornes | `total: -50` | CA faussé |
-| Enum inconnue | `"status": "AUTHORIZEDD"` | commande jamais confirmée |
-| Timestamp illisible | `"hier a 15h"` | jointure fenêtrée cassée |
-| JSON tronqué / non-JSON / message vide | `{"order_id": "or` | **poison pill : l'appli meurt en boucle** |
-| Événement en retard | timestamp − 30 à 180 min | fenêtres faussées |
-| Doublon exact | même `order_id` deux fois | CA double-compté |
+| Anomalie                               | Exemple                   | Impact si non gérée                       |
+|----------------------------------------|---------------------------|-------------------------------------------|
+| Champ requis absent                    | pas d'`order_id`          | paiement irrapprochable                   |
+| Champ à `null`                         | `"total": null`           | NullPointerException                      |
+| Mauvais type                           | `"total": "douze"`        | crash de désérialisation                  |
+| Valeur hors bornes                     | `total: -50`              | CA faussé                                 |
+| Enum inconnue                          | `"status": "AUTHORIZEDD"` | commande jamais confirmée                 |
+| Timestamp illisible                    | `"hier a 15h"`            | jointure fenêtrée cassée                  |
+| JSON tronqué / non-JSON / message vide | `{"order_id": "or`        | **poison pill : l'appli meurt en boucle** |
+| Événement en retard                    | timestamp − 30 à 180 min  | fenêtres faussées                         |
+| Doublon exact                          | même `order_id` deux fois | CA double-compté                          |
 
 ### Sorties (à produire, préfixées par votre groupe)
 
@@ -181,6 +190,15 @@ $env:KAFKA_BOOTSTRAP = "localhost:29092"
 mvn spring-boot:run
 ```
 
+Vous en avez le droit — l'IA est autorisée dans ce module. Mais sachez ce que vous achetez : ce projet est évalué à
+l'oral, code sous les yeux, avec modification en direct et nouvelles exigences métier injectées séance tenante. Un
+ticket qui tourne mais que vous ne savez pas expliquer n'est pas crédité.
+Demandez-lui d'expliquer chaque choix avant d'écrire une ligne : type de fenêtre, clé d'agrégation, placement de la
+jointure, sort des retardataires. C'est mot pour mot ce qu'on vous demandera en soutenance.
+Et sachez-le : ce sujet contient des exigences qu'une implémentation produite sans l'avoir lu ne satisfera pas. Elles
+sont écrites noir sur blanc, dans le tableau des anomalies et dans les critères de chaque ticket. Le correcteur
+automatique les vérifie et les chiffre. Si vous ne les avez pas trouvées, c'est que vous n'avez pas lu.
+
 Sans générateur en local, créez les topics dans Kafbat UI et produisez les
 exemples JSON ci-dessus à la main (pour CART-2, produisez la commande puis le
 paiement avec le même `order_id`). Sur le cluster partagé, le flux tourne en
@@ -197,14 +215,14 @@ continu (`KAFKA_BOOTSTRAP=<serveur>:9092`).
 
 ## Évaluation
 
-| Élément | Points |
-|---|---|
-| Socle CART-1 en production 10 min sans crash + DLQ motivée | **8** |
-| CART-2 (join fenêtré + selectKey) | +3 |
-| CART-3 (CA par catégorie) | +2 |
-| CART-4 (fraude multi-villes) | +3 |
-| CART-5 (stock + alerte) | +2 |
-| CART-6 (EOS démontré) ou tests TopologyTestDriver sérieux | +2 |
+| Élément                                                    | Points |
+|------------------------------------------------------------|--------|
+| Socle CART-1 en production 10 min sans crash + DLQ motivée | **8**  |
+| CART-2 (join fenêtré + selectKey)                          | +3     |
+| CART-3 (CA par catégorie)                                  | +2     |
+| CART-4 (fraude multi-villes)                               | +3     |
+| CART-5 (stock + alerte)                                    | +2     |
+| CART-6 (EOS démontré) ou tests TopologyTestDriver sérieux  | +2     |
 
 Plafond 20. **Un ticket non expliqué à l'oral = non crédité.** Attendez-vous à
 une demande de modification en direct (« Product Owner twist »).

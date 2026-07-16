@@ -81,17 +81,17 @@ le catalogue — d'où la jointure du ticket BINGE-3.
 
 ### Anomalies présentes dans le flux (~7 % + retards + doublons)
 
-| Anomalie | Exemple | Impact si non gérée |
-|---|---|---|
-| Champ requis absent | pas de `content_id` | NullPointerException ou compte faux |
-| Champ à `null` | `"event_type": null` | idem |
-| Mauvais type | `"position_seconds": "douze"` | crash de désérialisation |
-| Valeur hors bornes | `position_seconds: -1` | stats polluées |
-| Enum inconnue | `"event_type": "PLAYY"` | branche morte |
-| Timestamp illisible | `"hier a 15h"` | fenêtrage cassé |
-| JSON tronqué / non-JSON / message vide | `{"event_id": "ev-...` | **poison pill : l'appli meurt en boucle** |
-| Événement en retard | timestamp − 30 à 180 min | fenêtres faussées sans grace period |
-| Doublon exact | même `event_id` deux fois | double comptage |
+| Anomalie                               | Exemple                       | Impact si non gérée                       |
+|----------------------------------------|-------------------------------|-------------------------------------------|
+| Champ requis absent                    | pas de `content_id`           | NullPointerException ou compte faux       |
+| Champ à `null`                         | `"event_type": null`          | idem                                      |
+| Mauvais type                           | `"position_seconds": "douze"` | crash de désérialisation                  |
+| Valeur hors bornes                     | `position_seconds: -1`        | stats polluées                            |
+| Enum inconnue                          | `"event_type": "PLAYY"`       | branche morte                             |
+| Timestamp illisible                    | `"hier a 15h"`                | fenêtrage cassé                           |
+| JSON tronqué / non-JSON / message vide | `{"event_id": "ev-...`        | **poison pill : l'appli meurt en boucle** |
+| Événement en retard                    | timestamp − 30 à 180 min      | fenêtres faussées sans grace period       |
+| Doublon exact                          | même `event_id` deux fois     | double comptage                           |
 
 ### Sorties (à produire, préfixées par votre groupe)
 
@@ -172,6 +172,15 @@ Sans générateur en local, produisez quelques messages à la main via Kafbat UI
 l'enseignant l'accès au cluster partagé où le flux tourne en continu
 (`KAFKA_BOOTSTRAP=<serveur>:9092`).
 
+Vous en avez le droit — l'IA est autorisée dans ce module. Mais sachez ce que vous achetez : ce projet est évalué à
+l'oral, code sous les yeux, avec modification en direct et nouvelles exigences métier injectées séance tenante. Un
+ticket qui tourne mais que vous ne savez pas expliquer n'est pas crédité.
+Demandez-lui d'expliquer chaque choix avant d'écrire une ligne : type de fenêtre, clé d'agrégation, placement de la
+jointure, sort des retardataires. C'est mot pour mot ce qu'on vous demandera en soutenance.
+Et sachez-le : ce sujet contient des exigences qu'une implémentation produite sans l'avoir lu ne satisfera pas. Elles
+sont écrites noir sur blanc, dans le tableau des anomalies et dans les critères de chaque ticket. Le correcteur
+automatique les vérifie et les chiffre. Si vous ne les avez pas trouvées, c'est que vous n'avez pas lu.
+
 ## Contraintes
 
 - Java 21, Kafka Streams uniquement (pas de Spark/Flink), pas de base externe.
@@ -183,14 +192,14 @@ l'enseignant l'accès au cluster partagé où le flux tourne en continu
 
 ## Évaluation
 
-| Élément | Points |
-|---|---|
-| Socle BINGE-1 en production 10 min sans crash + DLQ motivée | **8** |
-| BINGE-2 (comptage + dédoublonnage) | +2 |
-| BINGE-3 (fenêtres hopping + jointure catalogue) | +3 |
-| BINGE-4 (alerte QoE calibrée) | +3 |
-| BINGE-5 (sessions) | +2 |
-| BINGE-6 (API IQ) ou tests TopologyTestDriver sérieux | +2 |
+| Élément                                                     | Points |
+|-------------------------------------------------------------|--------|
+| Socle BINGE-1 en production 10 min sans crash + DLQ motivée | **8**  |
+| BINGE-2 (comptage + dédoublonnage)                          | +2     |
+| BINGE-3 (fenêtres hopping + jointure catalogue)             | +3     |
+| BINGE-4 (alerte QoE calibrée)                               | +3     |
+| BINGE-5 (sessions)                                          | +2     |
+| BINGE-6 (API IQ) ou tests TopologyTestDriver sérieux        | +2     |
 
 Plafond 20. **Un ticket non expliqué à l'oral = non crédité**, quelle que soit
 la qualité du code. Attendez-vous à une demande de modification en direct

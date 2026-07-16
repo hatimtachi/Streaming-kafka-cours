@@ -105,19 +105,19 @@ campagne :
 
 ### Anomalies présentes dans le flux (~7 % + retards + doublons)
 
-| Anomalie | Exemple | Impact si non gérée |
-|---|---|---|
-| Champ requis absent | pas de `campaign_id` | dépense non attribuable |
-| Champ à `null` | `"site_id": null` | NullPointerException |
-| Mauvais type | `"paid_price_eur": "douze"` | crash de désérialisation |
-| Mauvais type piégeux | `"paid_price_eur": true` | en JSON, `true` n'est pas un nombre |
-| Valeur hors bornes | `paid_price_eur: 1000000000` | facturation absurde |
-| Enum inconnue | `"device": "UNKNOWN_42"` | impression perdue |
-| Timestamp illisible | `"hier a 15h"` | fenêtrage cassé |
-| JSON tronqué / non-JSON / message vide | `{"impression_id": "imp` | **poison pill : l'appli meurt en boucle** |
-| Événement en retard | timestamp − 30 à 180 min | tops faussés, **et delta impression→clic négatif** |
-| Doublon exact | même `impression_id` deux fois | **annonceur facturé deux fois** |
-| Campagne hors catalogue | `cmp-0900` absente de `relay.campaigns` | impressions perdues si `join` au lieu de `leftJoin` |
+| Anomalie                               | Exemple                                 | Impact si non gérée                                 |
+|----------------------------------------|-----------------------------------------|-----------------------------------------------------|
+| Champ requis absent                    | pas de `campaign_id`                    | dépense non attribuable                             |
+| Champ à `null`                         | `"site_id": null`                       | NullPointerException                                |
+| Mauvais type                           | `"paid_price_eur": "douze"`             | crash de désérialisation                            |
+| Mauvais type piégeux                   | `"paid_price_eur": true`                | en JSON, `true` n'est pas un nombre                 |
+| Valeur hors bornes                     | `paid_price_eur: 1000000000`            | facturation absurde                                 |
+| Enum inconnue                          | `"device": "UNKNOWN_42"`                | impression perdue                                   |
+| Timestamp illisible                    | `"hier a 15h"`                          | fenêtrage cassé                                     |
+| JSON tronqué / non-JSON / message vide | `{"impression_id": "imp`                | **poison pill : l'appli meurt en boucle**           |
+| Événement en retard                    | timestamp − 30 à 180 min                | tops faussés, **et delta impression→clic négatif**  |
+| Doublon exact                          | même `impression_id` deux fois          | **annonceur facturé deux fois**                     |
+| Campagne hors catalogue                | `cmp-0900` absente de `relay.campaigns` | impressions perdues si `join` au lieu de `leftJoin` |
 
 ### Sorties (à produire, préfixées par votre groupe)
 
@@ -199,6 +199,15 @@ $env:KAFKA_BOOTSTRAP = "localhost:29092"
 mvn quarkus:dev
 ```
 
+Vous en avez le droit — l'IA est autorisée dans ce module. Mais sachez ce que vous achetez : ce projet est évalué à
+l'oral, code sous les yeux, avec modification en direct et nouvelles exigences métier injectées séance tenante. Un
+ticket qui tourne mais que vous ne savez pas expliquer n'est pas crédité.
+Demandez-lui d'expliquer chaque choix avant d'écrire une ligne : type de fenêtre, clé d'agrégation, placement de la
+jointure, sort des retardataires. C'est mot pour mot ce qu'on vous demandera en soutenance.
+Et sachez-le : ce sujet contient des exigences qu'une implémentation produite sans l'avoir lu ne satisfera pas. Elles
+sont écrites noir sur blanc, dans le tableau des anomalies et dans les critères de chaque ticket. Le correcteur
+automatique les vérifie et les chiffre. Si vous ne les avez pas trouvées, c'est que vous n'avez pas lu.
+
 **Important** : l'extension Quarkus attend que les topics listés dans
 `quarkus.kafka-streams.topics` existent avant de démarrer la topologie. En
 local, créez `relay.impressions`, `relay.clicks` et `relay.campaigns` dans
@@ -216,14 +225,14 @@ ils existent déjà (`KAFKA_BOOTSTRAP=<serveur>:9092`).
 
 ## Évaluation
 
-| Élément | Points |
-|---|---|
-| Socle RLY-1 en production 10 min sans crash + DLQ motivée | **8** |
-| RLY-2 (viewability + seuil de significativité) | +2 |
-| RLY-3 (top par pays + GlobalKTable) | +3 |
-| RLY-4 (dépense + dédoublonnage) | +3 |
-| RLY-5 (jointure flux-flux + clics robots) | +2 |
-| RLY-6 (tests TopologyTestDriver) | +2 |
+| Élément                                                   | Points |
+|-----------------------------------------------------------|--------|
+| Socle RLY-1 en production 10 min sans crash + DLQ motivée | **8**  |
+| RLY-2 (viewability + seuil de significativité)            | +2     |
+| RLY-3 (top par pays + GlobalKTable)                       | +3     |
+| RLY-4 (dépense + dédoublonnage)                           | +3     |
+| RLY-5 (jointure flux-flux + clics robots)                 | +2     |
+| RLY-6 (tests TopologyTestDriver)                          | +2     |
 
 Plafond 20. **Un ticket non expliqué à l'oral = non crédité.** Attendez-vous à
 une demande de modification en direct (« Product Owner twist »).

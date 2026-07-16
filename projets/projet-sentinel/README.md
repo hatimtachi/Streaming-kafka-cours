@@ -73,23 +73,27 @@ SUPERMARCHE, ESSENCE, ELECTRONIQUE, VOYAGE, MODE, VTC, STREAMING`.
 **`sentinel.merchants`** — topic **compacté**, clé : `merchant_id` :
 
 ```json
-{"merchant_id": "mch-014", "name": "Bistrot 21 7",
- "category": "RESTAURANT", "city": "Paris"}
+{
+  "merchant_id": "mch-014",
+  "name": "Bistrot 21 7",
+  "category": "RESTAURANT",
+  "city": "Paris"
+}
 ```
 
 ### Anomalies présentes dans le flux (~7 % + retards + doublons)
 
-| Anomalie | Exemple | Impact si non gérée |
-|---|---|---|
-| Champ requis absent | pas de `card_id` | tx inexploitable |
-| Champ à `null` | `"amount": null` | NullPointerException |
-| Mauvais type | `"lon": "douze"` | crash de désérialisation |
-| Valeur hors bornes | `amount: -12.5` | moyennes polluées |
-| Enum inconnue | `"status": "APPROVEDD"` | stats marchands fausses |
-| Timestamp illisible | `"hier a 15h"` | fenêtrage cassé |
-| JSON tronqué / non-JSON / message vide | `{"tx_id": "tx` | **poison pill : l'appli meurt en boucle** |
-| Événement en retard | timestamp − 30 à 180 min | velocity faussée |
-| Doublon exact | même `tx_id` deux fois | fausse velocity |
+| Anomalie                               | Exemple                  | Impact si non gérée                       |
+|----------------------------------------|--------------------------|-------------------------------------------|
+| Champ requis absent                    | pas de `card_id`         | tx inexploitable                          |
+| Champ à `null`                         | `"amount": null`         | NullPointerException                      |
+| Mauvais type                           | `"lon": "douze"`         | crash de désérialisation                  |
+| Valeur hors bornes                     | `amount: -12.5`          | moyennes polluées                         |
+| Enum inconnue                          | `"status": "APPROVEDD"`  | stats marchands fausses                   |
+| Timestamp illisible                    | `"hier a 15h"`           | fenêtrage cassé                           |
+| JSON tronqué / non-JSON / message vide | `{"tx_id": "tx`          | **poison pill : l'appli meurt en boucle** |
+| Événement en retard                    | timestamp − 30 à 180 min | velocity faussée                          |
+| Doublon exact                          | même `tx_id` deux fois   | fausse velocity                           |
 
 ### Sorties (à produire, préfixées par votre groupe)
 
@@ -173,6 +177,15 @@ $env:KAFKA_BOOTSTRAP = "localhost:29092"
 mvn spring-boot:run
 ```
 
+Vous en avez le droit — l'IA est autorisée dans ce module. Mais sachez ce que vous achetez : ce projet est évalué à
+l'oral, code sous les yeux, avec modification en direct et nouvelles exigences métier injectées séance tenante. Un
+ticket qui tourne mais que vous ne savez pas expliquer n'est pas crédité.
+Demandez-lui d'expliquer chaque choix avant d'écrire une ligne : type de fenêtre, clé d'agrégation, placement de la
+jointure, sort des retardataires. C'est mot pour mot ce qu'on vous demandera en soutenance.
+Et sachez-le : ce sujet contient des exigences qu'une implémentation produite sans l'avoir lu ne satisfera pas. Elles
+sont écrites noir sur blanc, dans le tableau des anomalies et dans les critères de chaque ticket. Le correcteur
+automatique les vérifie et les chiffre. Si vous ne les avez pas trouvées, c'est que vous n'avez pas lu.
+
 Sans générateur en local, créez les topics dans Kafbat UI et produisez les
 exemples JSON ci-dessus à la main (pour SEN-3, deux transactions même carte,
 villes Paris puis New York, timestamps rapprochés). Sur le cluster partagé, le
@@ -189,14 +202,14 @@ flux tourne en continu (`KAFKA_BOOTSTRAP=<serveur>:9092`).
 
 ## Évaluation
 
-| Élément | Points |
-|---|---|
-| Socle SEN-1 en production 10 min sans crash + DLQ motivée | **8** |
-| SEN-2 (velocity + dédoublonnage) | +2 |
-| SEN-3 (voyage impossible, haversine) | +4 |
-| SEN-4 (montant vs moyenne mobile) | +2 |
-| SEN-5 (stats marchands + GlobalKTable) | +2 |
-| SEN-6 (EOS + API) ou tests TopologyTestDriver sérieux | +2 |
+| Élément                                                   | Points |
+|-----------------------------------------------------------|--------|
+| Socle SEN-1 en production 10 min sans crash + DLQ motivée | **8**  |
+| SEN-2 (velocity + dédoublonnage)                          | +2     |
+| SEN-3 (voyage impossible, haversine)                      | +4     |
+| SEN-4 (montant vs moyenne mobile)                         | +2     |
+| SEN-5 (stats marchands + GlobalKTable)                    | +2     |
+| SEN-6 (EOS + API) ou tests TopologyTestDriver sérieux     | +2     |
 
 Plafond 20. **Un ticket non expliqué à l'oral = non crédité.** Attendez-vous à
 une demande de modification en direct (« Product Owner twist »).

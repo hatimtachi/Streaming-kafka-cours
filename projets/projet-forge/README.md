@@ -103,18 +103,18 @@ machine. C'est la seule source de l'`atelier` :
 
 ### Anomalies présentes dans le flux (~7 % + retards + doublons)
 
-| Anomalie | Exemple | Impact si non gérée |
-|---|---|---|
-| Champ requis absent | pas de `machine_id` | pièce non attribuable |
-| Champ à `null` | `"product_id": null` | NullPointerException |
-| Mauvais type | `"rpm": "douze"` | crash de désérialisation |
-| Mauvais type piégeux | `"rpm": true` | en JSON, `true` n'est pas un nombre |
-| Valeur hors bornes | `unit_value_eur: -9999` | valeur produite fausse |
-| Timestamp illisible | `"hier a 15h"` | fenêtrage cassé |
-| JSON tronqué / non-JSON / message vide | `{"unit_id": "u` | **poison pill : l'appli meurt en boucle** |
-| Événement en retard | timestamp − 30 à 180 min | **un relevé vieux de 90 min ne prouve pas qu'une machine parle aujourd'hui** |
-| Doublon exact | même `unit_id` deux fois | pièce comptée deux fois |
-| Machine hors catalogue | `new-0002` absente de `forge.machines` | pièces perdues si `join` au lieu de `leftJoin` |
+| Anomalie                               | Exemple                                | Impact si non gérée                                                          |
+|----------------------------------------|----------------------------------------|------------------------------------------------------------------------------|
+| Champ requis absent                    | pas de `machine_id`                    | pièce non attribuable                                                        |
+| Champ à `null`                         | `"product_id": null`                   | NullPointerException                                                         |
+| Mauvais type                           | `"rpm": "douze"`                       | crash de désérialisation                                                     |
+| Mauvais type piégeux                   | `"rpm": true`                          | en JSON, `true` n'est pas un nombre                                          |
+| Valeur hors bornes                     | `unit_value_eur: -9999`                | valeur produite fausse                                                       |
+| Timestamp illisible                    | `"hier a 15h"`                         | fenêtrage cassé                                                              |
+| JSON tronqué / non-JSON / message vide | `{"unit_id": "u`                       | **poison pill : l'appli meurt en boucle**                                    |
+| Événement en retard                    | timestamp − 30 à 180 min               | **un relevé vieux de 90 min ne prouve pas qu'une machine parle aujourd'hui** |
+| Doublon exact                          | même `unit_id` deux fois               | pièce comptée deux fois                                                      |
+| Machine hors catalogue                 | `new-0002` absente de `forge.machines` | pièces perdues si `join` au lieu de `leftJoin`                               |
 
 ### Sorties (à produire, préfixées par votre groupe)
 
@@ -205,6 +205,15 @@ $env:KAFKA_BOOTSTRAP = "localhost:29092"
 mvn quarkus:dev
 ```
 
+Vous en avez le droit — l'IA est autorisée dans ce module. Mais sachez ce que vous achetez : ce projet est évalué à
+l'oral, code sous les yeux, avec modification en direct et nouvelles exigences métier injectées séance tenante. Un
+ticket qui tourne mais que vous ne savez pas expliquer n'est pas crédité.
+Demandez-lui d'expliquer chaque choix avant d'écrire une ligne : type de fenêtre, clé d'agrégation, placement de la
+jointure, sort des retardataires. C'est mot pour mot ce qu'on vous demandera en soutenance.
+Et sachez-le : ce sujet contient des exigences qu'une implémentation produite sans l'avoir lu ne satisfera pas. Elles
+sont écrites noir sur blanc, dans le tableau des anomalies et dans les critères de chaque ticket. Le correcteur
+automatique les vérifie et les chiffre. Si vous ne les avez pas trouvées, c'est que vous n'avez pas lu.
+
 **Important** : l'extension Quarkus attend que les topics listés dans
 `quarkus.kafka-streams.topics` existent avant de démarrer la topologie. Si on
 vous a remis un **jeu de données en fichiers**, créez les topics puis rejouez-le
@@ -229,14 +238,14 @@ passerelle soit tombée. Sur le cluster partagé, il y en a des heures.
 
 ## Évaluation
 
-| Élément | Points |
-|---|---|
-| Socle FOR-1 en production 10 min sans crash + DLQ motivée | **8** |
-| FOR-2 (dérive d'outil + seuil de significativité) | +2 |
-| FOR-3 (top par atelier + GlobalKTable) | +3 |
-| FOR-4 (valeur produite + dédoublonnage) | +3 |
-| FOR-5 (machine muette) | +2 |
-| FOR-6 (tests TopologyTestDriver) | +2 |
+| Élément                                                   | Points |
+|-----------------------------------------------------------|--------|
+| Socle FOR-1 en production 10 min sans crash + DLQ motivée | **8**  |
+| FOR-2 (dérive d'outil + seuil de significativité)         | +2     |
+| FOR-3 (top par atelier + GlobalKTable)                    | +3     |
+| FOR-4 (valeur produite + dédoublonnage)                   | +3     |
+| FOR-5 (machine muette)                                    | +2     |
+| FOR-6 (tests TopologyTestDriver)                          | +2     |
 
 Plafond 20. **Un ticket non expliqué à l'oral = non crédité.** Attendez-vous à
 une demande de modification en direct (« Product Owner twist »).

@@ -111,19 +111,19 @@ C'est la seule source de la `region` :
 
 ### Anomalies présentes dans le flux (~7 % + retards + doublons)
 
-| Anomalie | Exemple | Impact si non gérée |
-|---|---|---|
-| Champ requis absent | pas de `player_id` | événement non attribuable |
-| Champ à `null` | `"event_type": null` | NullPointerException |
-| Mauvais type | `"reaction_ms": "douze"` | crash de désérialisation |
-| Mauvais type piégeux | `"reaction_ms": true` | en JSON, `true` n'est pas un nombre |
-| Valeur hors bornes | `amount_eur: 1000000000` | CA absurde |
-| Enum inconnue | `"event_type": "KILLL"` | kill perdu |
-| Timestamp illisible | `"hier a 15h"` | fenêtrage cassé |
-| JSON tronqué / non-JSON / message vide | `{"event_id": "ev` | **poison pill : l'appli meurt en boucle** |
-| Événement en retard | timestamp − 30 à 180 min | **hors de toute grâce raisonnable : à écarter du fenêtrage, pas du CA** |
-| Doublon exact | même `purchase_id` deux fois | **joueur débité deux fois** |
-| Compte hors catalogue | `smurf-0007` absent d'`arena.players` | kills perdus si `join` au lieu de `leftJoin` |
+| Anomalie                               | Exemple                               | Impact si non gérée                                                     |
+|----------------------------------------|---------------------------------------|-------------------------------------------------------------------------|
+| Champ requis absent                    | pas de `player_id`                    | événement non attribuable                                               |
+| Champ à `null`                         | `"event_type": null`                  | NullPointerException                                                    |
+| Mauvais type                           | `"reaction_ms": "douze"`              | crash de désérialisation                                                |
+| Mauvais type piégeux                   | `"reaction_ms": true`                 | en JSON, `true` n'est pas un nombre                                     |
+| Valeur hors bornes                     | `amount_eur: 1000000000`              | CA absurde                                                              |
+| Enum inconnue                          | `"event_type": "KILLL"`               | kill perdu                                                              |
+| Timestamp illisible                    | `"hier a 15h"`                        | fenêtrage cassé                                                         |
+| JSON tronqué / non-JSON / message vide | `{"event_id": "ev`                    | **poison pill : l'appli meurt en boucle**                               |
+| Événement en retard                    | timestamp − 30 à 180 min              | **hors de toute grâce raisonnable : à écarter du fenêtrage, pas du CA** |
+| Doublon exact                          | même `purchase_id` deux fois          | **joueur débité deux fois**                                             |
+| Compte hors catalogue                  | `smurf-0007` absent d'`arena.players` | kills perdus si `join` au lieu de `leftJoin`                            |
 
 ### Sorties (à produire, préfixées par votre groupe)
 
@@ -212,6 +212,15 @@ $env:KAFKA_BOOTSTRAP = "localhost:29092"
 mvn quarkus:dev
 ```
 
+Vous en avez le droit — l'IA est autorisée dans ce module. Mais sachez ce que vous achetez : ce projet est évalué à
+l'oral, code sous les yeux, avec modification en direct et nouvelles exigences métier injectées séance tenante. Un
+ticket qui tourne mais que vous ne savez pas expliquer n'est pas crédité.
+Demandez-lui d'expliquer chaque choix avant d'écrire une ligne : type de fenêtre, clé d'agrégation, placement de la
+jointure, sort des retardataires. C'est mot pour mot ce qu'on vous demandera en soutenance.
+Et sachez-le : ce sujet contient des exigences qu'une implémentation produite sans l'avoir lu ne satisfera pas. Elles
+sont écrites noir sur blanc, dans le tableau des anomalies et dans les critères de chaque ticket. Le correcteur
+automatique les vérifie et les chiffre. Si vous ne les avez pas trouvées, c'est que vous n'avez pas lu.
+
 **Important** : l'extension Quarkus attend que les topics listés dans
 `quarkus.kafka-streams.topics` existent avant de démarrer la topologie. Si on
 vous a remis un **jeu de données en fichiers**, créez les topics puis rejouez-le
@@ -235,14 +244,14 @@ Sur le cluster partagé, les topics existent déjà (`KAFKA_BOOTSTRAP=<serveur>:
 
 ## Évaluation
 
-| Élément | Points |
-|---|---|
-| Socle ARN-1 en production 10 min sans crash + DLQ motivée | **8** |
-| ARN-2 (aimbot + seuil de significativité) | +2 |
-| ARN-3 (top armes + GlobalKTable) | +3 |
-| ARN-4 (chiffre d'affaires + dédoublonnage) | +3 |
-| ARN-5 (fenêtres de session + marathon) | +2 |
-| ARN-6 (résultat final de fenêtre) | +2 |
+| Élément                                                   | Points |
+|-----------------------------------------------------------|--------|
+| Socle ARN-1 en production 10 min sans crash + DLQ motivée | **8**  |
+| ARN-2 (aimbot + seuil de significativité)                 | +2     |
+| ARN-3 (top armes + GlobalKTable)                          | +3     |
+| ARN-4 (chiffre d'affaires + dédoublonnage)                | +3     |
+| ARN-5 (fenêtres de session + marathon)                    | +2     |
+| ARN-6 (résultat final de fenêtre)                         | +2     |
 
 Plafond 20. **Un ticket non expliqué à l'oral = non crédité.** Attendez-vous à
 une demande de modification en direct (« Product Owner twist »).

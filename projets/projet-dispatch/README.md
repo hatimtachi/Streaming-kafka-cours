@@ -53,8 +53,16 @@ Z-ETOILE, Z-MONTPARNASSE, Z-BELLEVILLE, Z-ODEON, Z-PIGALLE, Z-NATION, Z-AUTEUIL`
 {
   "request_id": "req-398d1ca6",
   "user_id": "u-0278",
-  "pickup":  {"lat": 48.854972, "lon": 2.375735, "zone": "Z-BASTILLE"},
-  "dropoff": {"lat": 48.848057, "lon": 2.363855, "zone": "Z-NATION"},
+  "pickup": {
+    "lat": 48.854972,
+    "lon": 2.375735,
+    "zone": "Z-BASTILLE"
+  },
+  "dropoff": {
+    "lat": 48.848057,
+    "lon": 2.363855,
+    "zone": "Z-NATION"
+  },
   "timestamp": "2026-07-04T14:03:21.512Z"
 }
 ```
@@ -65,7 +73,9 @@ par chauffeur, `status` ∈ `AVAILABLE | BUSY | OFFLINE` :
 ```json
 {
   "driver_id": "drv-034",
-  "lat": 48.864121, "lon": 2.340588, "zone": "Z-CHATELET",
+  "lat": 48.864121,
+  "lon": 2.340588,
+  "zone": "Z-CHATELET",
   "status": "AVAILABLE",
   "timestamp": "2026-07-04T14:03:21.512Z"
 }
@@ -90,17 +100,17 @@ dizaines de secondes après le START) :
 
 ### Anomalies présentes dans le flux (~7 % + retards + doublons)
 
-| Anomalie | Exemple | Impact si non gérée |
-|---|---|---|
-| Champ requis absent | pas de `zone` | agrégat par zone faux |
-| Champ à `null` | `"status": null` | NullPointerException |
-| Mauvais type | `"lat": "douze"` | crash de désérialisation |
-| GPS hors bornes | `lat: 91.2` ou hors Paris | zones polluées |
-| Enum inconnue | `"status": "AVAILABLEE"` | offre surestimée |
-| Timestamp illisible | `"hier a 15h"` | fenêtrage cassé |
-| JSON tronqué / non-JSON / message vide | `{"driver_id": "drv` | **poison pill : l'appli meurt en boucle** |
-| Événement en retard | timestamp − 30 à 180 min | fenêtres faussées |
-| Doublon exact | même `request_id` deux fois | demande double-comptée |
+| Anomalie                               | Exemple                     | Impact si non gérée                       |
+|----------------------------------------|-----------------------------|-------------------------------------------|
+| Champ requis absent                    | pas de `zone`               | agrégat par zone faux                     |
+| Champ à `null`                         | `"status": null`            | NullPointerException                      |
+| Mauvais type                           | `"lat": "douze"`            | crash de désérialisation                  |
+| GPS hors bornes                        | `lat: 91.2` ou hors Paris   | zones polluées                            |
+| Enum inconnue                          | `"status": "AVAILABLEE"`    | offre surestimée                          |
+| Timestamp illisible                    | `"hier a 15h"`              | fenêtrage cassé                           |
+| JSON tronqué / non-JSON / message vide | `{"driver_id": "drv`        | **poison pill : l'appli meurt en boucle** |
+| Événement en retard                    | timestamp − 30 à 180 min    | fenêtres faussées                         |
+| Doublon exact                          | même `request_id` deux fois | demande double-comptée                    |
 
 Bornes de validité GPS pour ce projet : `48.7 ≤ lat ≤ 49.0` et `2.2 ≤ lon ≤ 2.5`.
 
@@ -175,6 +185,15 @@ $env:KAFKA_BOOTSTRAP = "localhost:29092"
 mvn quarkus:dev
 ```
 
+Vous en avez le droit — l'IA est autorisée dans ce module. Mais sachez ce que vous achetez : ce projet est évalué à
+l'oral, code sous les yeux, avec modification en direct et nouvelles exigences métier injectées séance tenante. Un
+ticket qui tourne mais que vous ne savez pas expliquer n'est pas crédité.
+Demandez-lui d'expliquer chaque choix avant d'écrire une ligne : type de fenêtre, clé d'agrégation, placement de la
+jointure, sort des retardataires. C'est mot pour mot ce qu'on vous demandera en soutenance.
+Et sachez-le : ce sujet contient des exigences qu'une implémentation produite sans l'avoir lu ne satisfera pas. Elles
+sont écrites noir sur blanc, dans le tableau des anomalies et dans les critères de chaque ticket. Le correcteur
+automatique les vérifie et les chiffre. Si vous ne les avez pas trouvées, c'est que vous n'avez pas lu.
+
 **Important** : l'extension Quarkus attend que les topics listés dans
 `quarkus.kafka-streams.topics` existent avant de démarrer la topologie. En
 local, créez-les d'abord dans Kafbat UI (mêmes noms, 3 partitions suffisent),
@@ -192,14 +211,14 @@ cluster partagé, ils existent déjà (`KAFKA_BOOTSTRAP=<serveur>:9092`).
 
 ## Évaluation
 
-| Élément | Points |
-|---|---|
-| Socle DISP-1 en production 10 min sans crash + DLQ motivée | **8** |
-| DISP-2 (demande par zone) | +2 |
-| DISP-3 (offre par zone, dernière position) | +3 |
-| DISP-4 (surge, jointure demande × offre) | +3 |
-| DISP-5 (courses anormales) | +2 |
-| DISP-6 (API IQ) ou tests TopologyTestDriver sérieux | +2 |
+| Élément                                                    | Points |
+|------------------------------------------------------------|--------|
+| Socle DISP-1 en production 10 min sans crash + DLQ motivée | **8**  |
+| DISP-2 (demande par zone)                                  | +2     |
+| DISP-3 (offre par zone, dernière position)                 | +3     |
+| DISP-4 (surge, jointure demande × offre)                   | +3     |
+| DISP-5 (courses anormales)                                 | +2     |
+| DISP-6 (API IQ) ou tests TopologyTestDriver sérieux        | +2     |
 
 Plafond 20. **Un ticket non expliqué à l'oral = non crédité.** Attendez-vous à
 une demande de modification en direct (« Product Owner twist »).
